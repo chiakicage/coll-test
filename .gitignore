@@ -8,6 +8,8 @@
 .vscode/
 build/
 
+*.o
+
 *.i
 *.ii
 *.gpu

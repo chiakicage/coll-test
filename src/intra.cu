@@ -1,79 +1,81 @@
-#include <nccl.h>
-#include <iostream>
 #include <mpi.h>
+#include <nccl.h>
+
+#include <iostream>
 
 const int BUFFER_SIZE = 10;
 const int nDev = 4;
 
-
-int intraReduce(const void* sendbuff, void* recvbuff, size_t count, ncclDataType_t datatype, ncclRedOp_t op, int root, ncclComm_t* comms) {
-	cudaStream_t streams[nDev];
-	for (int i = 0; i < nDev; i++) {
-		cudaSetDevice(i);
-		cudaStreamCreate(&streams[i]);
-	}
-
-	ncclGroupStart();
-	ncclReduce(sendbuff, recvbuff, count, datatype, op, root, comm, stream);
-	ncclGroupEnd();
-	return 0;
+int intraReduce(const int* sendbuff, int* recvbuff, size_t count, int root,
+                ncclComm_t comm, cudaStream_t stream) {
+  ncclReduce(sendbuff, recvbuff, count, ncclInt, ncclSum, root, comm, stream);
+	cudaStreamSynchronize(stream);
+  return 0;
 }
 
-int intraBroadcast(const void* sendbuff, void* recvbuff, size_t count, ncclDataType_t datatype, int root, ncclComm_t comm, cudaStream_t stream) {
-	ncclGroupStart();
-	ncclBroadcast(sendbuff, recvbuff, count, datatype, root, comm, stream);
-	ncclGroupEnd();
-	return 0;
+int intraBroadcast(const int* sendbuff, int* recvbuff, size_t count, int root,
+                   ncclComm_t comm, cudaStream_t stream) {
+  ncclBroadcast(sendbuff, recvbuff, count, ncclInt, root, comm, stream);
+	cudaStreamSynchronize(stream);
+  return 0;
 }
 
 int main(int argc, char* argv[]) {
-	int nDev;
-	cudaGetDeviceCount(&nDev);
+  MPI_Init(&argc, &argv);
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-	
+  if (size != nDev) {
+    std::cout << "size != nDev" << std::endl;
+    return 0;
+  }
 
-	ncclComm_t comms[nDev];
-	ncclCommInitAll(comms, nDev, NULL);
+  ncclUniqueId id;
+  ncclComm_t comm;
+	int *data, *output, *buffer;
+  cudaStream_t s;
 
-	int* sendbuf[nDev];
-	int* recvbuf[nDev];
+  if (rank == 0) ncclGetUniqueId(&id);
+  MPI_Bcast((void*)&id, sizeof(id), MPI_BYTE, 0, MPI_COMM_WORLD);
+  std::cout << "rank: " << rank << std::endl;
 
-	for (int i = 0; i < nDev; i++) {
-		cudaSetDevice(i);
-		cudaMallocManaged(&sendbuf[i], BUFFER_SIZE * sizeof(int));
-		// cudaMemset(sendbuf[i], 1, BUFFER_SIZE * sizeof(int));
-		for (int j = 0; j < BUFFER_SIZE; j++) {
-			sendbuf[i][j] = j;
+  cudaSetDevice(rank);
+  cudaStreamCreate(&s);
+  cudaMallocManaged(&buffer, BUFFER_SIZE * sizeof(int));
+  cudaMemset(buffer, 0, BUFFER_SIZE * sizeof(int));
+
+	if (rank == 0) {
+		cudaMallocManaged(&data, BUFFER_SIZE * sizeof(int));
+		cudaMemset(data, 0, BUFFER_SIZE * sizeof(int));
+		cudaMallocManaged(&output, BUFFER_SIZE * sizeof(int));
+		cudaMemset(output, 0, BUFFER_SIZE * sizeof(int));
+
+		for (int i = 0; i < BUFFER_SIZE; i++) {
+			data[i] = i;
 		}
-		cudaMallocManaged(&recvbuf[i], BUFFER_SIZE * sizeof(int));
-		cudaMemset(recvbuf[i], 0, BUFFER_SIZE * sizeof(int));
 	}
 
-	// ncclCommFinalize(comm);
-	// ncclCommDestroy(comm);
-	for (int i = 0; i < nDev; i++) {
-		cudaSetDevice(i);
-		cudaStreamSynchronize(streams[i]);
+	ncclCommInitRank(&comm, size, id, rank);
+
+	intraBroadcast(data, buffer, BUFFER_SIZE, 0, comm, s);
+
+	intraReduce(buffer, output, BUFFER_SIZE, 0, comm, s);
+
+
+  cudaStreamSynchronize(s);
+
+	if (rank == 0) {
+		for (int i = 0; i < BUFFER_SIZE; i++) {
+			std::cout << output[i] << std::endl;
+		}
 	}
 
-	int sum = 0;
-	cudaSetDevice(1);
-	for (int i = 0; i < BUFFER_SIZE; i++) {
-		// sum += recvbuf[0][i];
-		std::cout << recvbuf[1][i] << std::endl;
-	}
-	std::cout << "sum: " << sum << std::endl;
-	std::cout << "done" << std::endl;
+  cudaStreamDestroy(s);
 
-	for (int i = 0; i < nDev; i++) {
-		cudaSetDevice(i);
-		cudaFree(sendbuf[i]);
-		cudaFree(recvbuf[i]);
-	}
+  ncclCommDestroy(comm);
 
-	for (int i = 0; i < nDev; i++) {
-		ncclCommDestroy(comms[i]);
-	}
+  MPI_Finalize();
 
-	return 0;
+  return 0;
 }
