@@ -4,7 +4,6 @@
 #include <iostream>
 
 const int BUFFER_SIZE = 10;
-const int nDev = 4;
 
 int intraReduce(const int* sendbuff, int* recvbuff, size_t count, int root,
                 ncclComm_t comm, cudaStream_t stream) {
@@ -26,7 +25,9 @@ int main(int argc, char* argv[]) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  if (size != nDev) {
+	int count;
+	cudaGetDeviceCount(&count);
+  if (size != count) {
     std::cout << "size != nDev" << std::endl;
     return 0;
   }
