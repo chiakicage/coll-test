@@ -2,9 +2,17 @@
 
 Implement two collective operations: `Reduce` and `Broadcast` in a single node
 
-```bash
-int intraReduce(const int* sendbuff, int* recvbuff, size_t count, int root, ncclComm_t comm, cudaStream_t stream);
-int intraBroadcast(const int* sendbuff, int* recvbuff, size_t count, int root, ncclComm_t comm, cudaStream_t stream);
+```c++
+// Single Process Version
+int intraReduce(int *const sendbuff[], int* recvbuff, size_t count, int root,
+                ncclComm_t *comms, cudaStream_t *streams);
+int intraBroadcast(int* sendbuff, int *const recvbuff[], size_t count, int root,
+                   ncclComm_t *comms, cudaStream_t *streams);
+// One Device per Process Version
+int intraReduce(const int* sendbuff, int* recvbuff, size_t count, int root,
+                ncclComm_t comm, cudaStream_t stream);
+int intraBroadcast(const int* sendbuff, int* recvbuff, size_t count, int root,
+                   ncclComm_t comm, cudaStream_t stream);
 ```
 ## Build
 

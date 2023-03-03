@@ -6,7 +6,7 @@
 const int BUFFER_SIZE = 10;
 const int nDev = 4;
 
-int intraReduce(int* sendbuff[], int* recvbuff, size_t count, int root,
+int intraReduce(int *const sendbuff[], int* recvbuff, size_t count, int root,
                 ncclComm_t *comms, cudaStream_t *streams) {
   ncclGroupStart();
   for (int i = 0; i < nDev; i++) {
@@ -20,7 +20,7 @@ int intraReduce(int* sendbuff[], int* recvbuff, size_t count, int root,
   return 0;
 }
 
-int intraBroadcast(int* sendbuff, int* recvbuff[], size_t count, int root,
+int intraBroadcast(int* sendbuff, int *const recvbuff[], size_t count, int root,
                    ncclComm_t *comms, cudaStream_t *streams) {
   ncclGroupStart();
   for (int i = 0; i < nDev; i++) {
