@@ -12,7 +12,7 @@ To build the tests, just type `make`.
 
 If CUDA is not installed in /usr/local/cuda, you may specify CUDA_HOME. Similarly, if NCCL is not installed in /usr, you may specify NCCL_HOME.
 
-By now the tests rely on MPI, and if MPI is not installed in /usr/local/mpi, you may specify MPI_HOME.
+By now there is a MPI version, if MPI is not installed in /usr/local/mpi, you may specify MPI_HOME.
 
 ```bash
 $ make CUDA_HOME=/path/to/cuda NCCL_HOME=/path/to/nccl MPI_HOME=/path/to/mpi
@@ -20,9 +20,17 @@ $ make CUDA_HOME=/path/to/cuda NCCL_HOME=/path/to/nccl MPI_HOME=/path/to/mpi
 
 ## Run
 
-Run on a single node with 4 GPUs
+Run on a single node with 4 GPUs using 1 process.
 
 ```bash
-$ mpirun -np 4 ./build/intra
+$ ./build/intra
 ```
+
+Run on a single node with 4 GPUs using 4 processes.
+
+```bash
+$ mpirun -np 4 ./build/intra_mpi
+```
+
+
 
