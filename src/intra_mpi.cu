@@ -1,6 +1,5 @@
 #include <mpi.h>
 #include <nccl.h>
-
 #include <iostream>
 
 const int BUFFER_SIZE = 10;
@@ -73,7 +72,11 @@ int main(int argc, char* argv[]) {
   }
 
   cudaStreamDestroy(s);
-
+  int cudaDev, Rank, nRanks;
+  ncclCommUserRank(comm, &Rank);
+  ncclCommCuDevice(comm, &cudaDev);
+  ncclCommCount(comm, &nRanks);
+  std::cout << "Rank " << Rank << " uses CUDA device " << cudaDev << " and is one of " << nRanks << " processes in the communicator" << std::endl;
   ncclCommDestroy(comm);
 
   MPI_Finalize();
