@@ -5,7 +5,7 @@ DEBUG ?= 0
 
 CUDA_LIB ?= $(CUDA_HOME)/lib64
 CUDA_INC ?= $(CUDA_HOME)/include
-NVCC = $(CUDA_HOME)/bin/nvcc
+NVCC = nvcc
 CUDARTLIB ?= cudart
 
 MPI_HOME ?= /usr/local/mpi
@@ -70,7 +70,7 @@ NVLDFLAGS += $(LIBRARIES:%=-l%)
 DST_DIR := $(BUILDDIR)
 SRC_FILES := $(wildcard *.cu)
 OBJ_FILES := $(SRC_FILES:%.cu=${DST_DIR}/%.o)
-BIN_FILES_LIST := intra intra_mpi
+BIN_FILES_LIST := intra intra_mpi intra_cuda
 BIN_FILES := $(BIN_FILES_LIST:%=${DST_DIR}/%)
 
 build: ${BIN_FILES}

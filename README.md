@@ -13,6 +13,11 @@ int intraReduce(const int* sendbuff, int* recvbuff, size_t count, int root,
                 ncclComm_t comm, cudaStream_t stream);
 int intraBroadcast(const int* sendbuff, int* recvbuff, size_t count, int root,
                    ncclComm_t comm, cudaStream_t stream);
+// CUDA Version
+int intraReduce(int *const sendbuff[], int *recvbuff, size_t count, int root,
+                int *devs, int ndev);
+int intraBroadcast(int *sendbuff, int *const recvbuff[], size_t count, int root,
+                   int *devs, int ndev);
 ```
 ## Build
 

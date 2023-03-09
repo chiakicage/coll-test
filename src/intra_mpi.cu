@@ -19,17 +19,19 @@ int intraBroadcast(const int* sendbuff, int* recvbuff, size_t count, int root,
 }
 
 int main(int argc, char* argv[]) {
-  MPI_Init(&argc, &argv);
+  MPI_Init(NULL, NULL);
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   int count;
   cudaGetDeviceCount(&count);
-  if (size != count) {
+  std::cout << "count: " << count << std::endl;
+  std::cout << "rank: " << rank << std::endl;
+  /*if (size != count) {
     std::cout << "size != nDev" << std::endl;
     return 0;
-  }
+  }*/
 
   ncclUniqueId id;
   ncclComm_t comm;
@@ -38,7 +40,7 @@ int main(int argc, char* argv[]) {
 
   if (rank == 0) ncclGetUniqueId(&id);
   MPI_Bcast((void*)&id, sizeof(id), MPI_BYTE, 0, MPI_COMM_WORLD);
-  std::cout << "rank: " << rank << std::endl;
+  std::cout << "rank: " << rank << " id" << std::endl;
 
   cudaSetDevice(rank);
   cudaStreamCreate(&s);
@@ -59,6 +61,8 @@ int main(int argc, char* argv[]) {
   ncclCommInitRank(&comm, size, id, rank);
 
   intraBroadcast(data, buffer, BUFFER_SIZE, 0, comm, s);
+
+  std::cout << "rank: " << rank << " broadcast" << std::endl;
 
   intraReduce(buffer, output, BUFFER_SIZE, 0, comm, s);
 

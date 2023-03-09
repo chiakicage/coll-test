@@ -8,6 +8,7 @@
 .vscode/
 build/
 
+build.sh
 *.o
 
 *.i
