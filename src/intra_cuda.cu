@@ -63,10 +63,9 @@ int intraReduce(int *const sendbuff[], int *recvbuff, size_t count, int root,
   cudaReduce<<<numBlocks, blockSize>>>(recvbuffs, recvbuff, count, root, ndev);
   cudaDeviceSynchronize();
   for (int i = 0; i < ndev; i++) {
-    if (i != root) {
-      cudaFree(recvbuffs[i]);
-    }
+    cudaFree(recvbuffs[i]);
   }
+  cudaFree(recvbuffs);
   for (int i = 0; i < ndev; i++) {
     cudaSetDevice(devs[i]);
     cudaStreamDestroy(streams[i]);
